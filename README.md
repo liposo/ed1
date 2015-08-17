@@ -1,2 +1,2 @@
-# ed1
-Estruturas de Dados - I
+# Estrutura de Dados - I
+Tentarei manter aqui as atividades da disciplina de Estrutura de dados - I.

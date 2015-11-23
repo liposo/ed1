@@ -52,7 +52,7 @@ int main(void) {
     printf("\n Informe o valor a ser buscado: ");
     scanf("%i", &val);
     if(binarySearch(ord, val) == 0) {
-        printf("\n O valor: %i, esta na liista.\n", val);
+        printf("\n O valor: %i, esta na lista.\n", val);
     } else {
         printf("\n Valor nao encontrado!\n");
     }
@@ -66,48 +66,51 @@ int main(void) {
 LISTA* nodoDoMeio(LISTA *inicio ,LISTA *fim) {
     if( inicio == NULL ) {
 		//lista vazia
-        printf("\n Lista vazia!! \n");
 		return NULL;
 	}
 
-	LISTA *s = inicio;
-	LISTA *f = fim -> proximo;
+	LISTA *slow = inicio;
+	LISTA *fast = inicio;
 
     /** A cada interação s anda uma posição enquanto que f anda duas**/
-	while ( f != fim ) {
-			f = f -> proximo;
-			if( f != fim ) {
-				s = s -> proximo;
-				f = f -> proximo;
+	while (fast != fim) {
+			fast = fast->proximo;
+			if(fast != fim) {
+				slow = slow->proximo;
+				fast = fast->proximo;
 			}
 	}
     /** No final s vai estar apontando para o nodo do meio da lista **/
-	return s ;
+	return slow;
 }
 
-int binarySearch(LISTA *l, int val) {
-    LISTA *nodoInicial = l;
+int binarySearch(LISTA *head, int val) {
+    LISTA *nodoInicial = head;
     LISTA *nodoFinal = NULL;
 
-    do {
-        LISTA *meio = nodoDoMeio(nodoInicial ,nodoFinal);
+    LISTA *meio = nodoDoMeio(nodoInicial ,nodoFinal);
 
-          if( meio == NULL ) {
-              printf("\n Problemas em encontrar o meio!! \n");
+    while(nodoFinal == NULL || nodoFinal->proximo != nodoInicial) {
+          if(meio == NULL ) {
               return 1;
           }
 
-          if( meio->valor == val ) {
+          if(meio->valor == val ) {
               return 0;
-          } else if ( meio->valor < val ) {
+          }
+          if(meio->valor < val ) {
                //busca nos maiores
                nodoInicial = meio->proximo;
-          } else {
+          }
+          if(meio->valor > val){
               //busca nos menores
               nodoFinal = meio;
           }
-    } while(nodoFinal == NULL || nodoFinal->proximo != nodoInicial);
-
+          meio = nodoDoMeio(nodoInicial ,nodoFinal);
+          if(nodoInicial->valor > val) {
+              return 1;
+          }
+    }
     //nada encontrado
     return 1;
 }

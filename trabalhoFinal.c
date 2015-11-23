@@ -6,7 +6,6 @@
 typedef struct _contato {
     char nome[45];
     char fone[30];
-    struct _contato *proximo;
 }TpContato;
 
 typedef struct _lista {
@@ -39,7 +38,20 @@ void listFree(ListaContato *lista);
 void imprimeLista(ListaContato *contatos);
 ListaContato* insereNaLista(ListaContato *contatos);
 ListaContato* criaListaContatos(ListaContato *contatos, int tamanho);
+ListaContato *copyList(ListaContato *contatos);
+
 ListaContato* insertionSort(ListaContato *contatos);
+
+ListaContato* mergeSort(ListaContato *esquerda);
+
+void slectionSort(ListaContato *contatos);
+void swap(ListaContato *a, ListaContato *b);
+
+ListaContato* getTail(ListaContato *cur);
+ListaContato* partition(ListaContato *head, ListaContato *end, ListaContato **newHead, ListaContato **newEnd);
+ListaContato* quickSortRecur(ListaContato *head, ListaContato *end);
+void quickSort(ListaContato **headRef);
+
 
 int main(void) {
 
@@ -98,7 +110,7 @@ int main(void) {
                     printf("\nLista inexistente\n");
                     break;
                 } else {
-                    insertion = contatos;
+                    insertion = copyList(contatos);
                     s = clock();
                     insertion = insertionSort(insertion);
                     f = clock();
@@ -113,9 +125,9 @@ int main(void) {
                     printf("\nLista inexistente\n");
                     break;
                 } else {
-                    selection = contatos;
+                    selection = copyList(contatos);
                     s = clock();
-
+                    slectionSort(selection);
                     f = clock();
                     printf("\n -- SelectionSort --\n");
                     imprimeLista(selection);
@@ -129,9 +141,9 @@ int main(void) {
                     printf("\nLista inexistente\n");
                     break;
                 } else {
-                    quick = contatos;
+                    quick = copyList(contatos);
                     s = clock();
-
+                    quickSort(&quick);
                     f = clock();
                     printf("\n -- QuickSort --\n");
                     imprimeLista(quick);
@@ -145,12 +157,12 @@ int main(void) {
                     printf("\nLista inexistente\n");
                     break;
                 } else {
-                    merge = contatos;
+                    merge = copyList(contatos);
                     s = clock();
-
+                    merge = mergeSort(merge);
                     f = clock();
                     printf("\n -- MergeSort --\n");
-                    imprimeLista(selection);
+                    imprimeLista(merge);
                     float t = (f-s)*1000/CLOCKS_PER_SEC;
                     printf("Tempo: %.2f segs.\n", t/1000);
                     break;
@@ -178,6 +190,27 @@ void listFree(ListaContato *lista) {
         free(l);
         l = aux;
     }
+}
+
+ListaContato *copyList(ListaContato *contatos) {
+    ListaContato *nova, *p, *ant;
+    nova = p = NULL;
+
+    while(contatos != NULL) {
+        p = (ListaContato*) malloc(sizeof(ListaContato));
+        strcpy(p->info.nome, contatos->info.nome);
+        strcpy(p->info.fone, contatos->info.fone);
+        if(!nova) {
+            nova = p;
+        } else {
+            ant->proximo = p;
+        }
+        ant = p;
+        contatos = contatos->proximo;
+    }
+
+    ant->proximo = NULL;
+    return nova;
 }
 
 /** CRIA LISTA  **/
@@ -263,4 +296,155 @@ ListaContato* insertionSort(ListaContato *contatos) {
         *tail = head;
     }
     return ordenado;
+}
+
+/** MERGE SORT **/
+ListaContato* mergeSort(ListaContato *esquerda) {
+    if(!esquerda->proximo) {
+        return esquerda;
+    }
+
+    ListaContato *slow = esquerda;
+    ListaContato *fast = esquerda;
+
+    while(fast) {
+        fast = fast->proximo;
+        slow = slow->proximo;
+        if(fast) {
+            fast = fast->proximo;
+        }
+    }
+
+    ListaContato *direita = NULL;
+    if(slow->proximo != fast) {
+        direita = slow->proximo;
+        slow->proximo = NULL;
+    } else {
+        direita = esquerda->proximo;
+        esquerda->proximo = NULL;
+    }
+
+    esquerda = mergeSort(esquerda);
+    direita = mergeSort(direita);
+
+    ListaContato *head = NULL, *pos = NULL;
+
+    while(esquerda || direita) {
+        ListaContato *use = NULL;
+        if(!direita || (esquerda && (strcmp(esquerda->info.nome, direita->info.nome)<0))) {
+            use = esquerda;
+            esquerda = esquerda->proximo;
+        } else {
+            use = direita;
+            direita = direita->proximo;
+        }
+
+        if(!head) {
+            pos = head = use;
+        }
+        pos->proximo = use;
+        pos = use;
+    }
+    return head;
+}
+
+/** SELECTION SORT **/
+void slectionSort(ListaContato *contatos) {
+    ListaContato *start = contatos;
+    ListaContato *trans = NULL;
+    ListaContato *min = NULL;
+
+    while(start->proximo) {
+        min  = start;
+        trans = start->proximo;
+
+        while(trans) {
+            if((strcmp(min->info.nome, trans->info.nome)>0)) {
+                min = trans;
+            }
+            trans = trans->proximo;
+        }
+        swap(start, min);
+        start = start->proximo;
+    }
+}
+
+void swap(ListaContato *a, ListaContato *b) {
+    TpContato temp = a->info;
+    a->info = b->info;
+    b->info = temp;
+}
+
+/** QUICK SORT **/
+ListaContato* getTail(ListaContato *cur) {
+    while(cur != NULL && cur->proximo != NULL) {
+        cur = cur->proximo;
+    }
+    return cur;
+}
+
+ListaContato* partition(ListaContato *head, ListaContato *end, ListaContato **newHead, ListaContato **newEnd) {
+    ListaContato *pivot = end;
+    ListaContato *prev = NULL, *cur = head, *tail = pivot;
+
+    while(cur != pivot) {
+        if((strcmp(cur->info.nome, pivot->info.nome)<0)) {
+            if ((*newHead) == NULL) {
+                (*newHead) = cur;
+            }
+            prev = cur;
+            cur = cur->proximo;
+        } else {
+            if(prev) {
+                prev->proximo = cur->proximo;
+            }
+            ListaContato *tmp = cur->proximo;
+            cur->proximo = NULL;
+            tail->proximo = cur;
+            tail = cur;
+            cur = tmp;
+        }
+    }
+    if((*newHead) == NULL) {
+        (*newHead) = pivot;
+    }
+
+    (*newEnd) = tail;
+
+    return pivot;
+}
+
+ListaContato* quickSortRecur(ListaContato *head, ListaContato *end) {
+    if(!head || head == end) {
+        return head;
+    }
+
+    ListaContato *newHead = NULL, *newEnd = NULL;
+
+    ListaContato *pivot = partition(head, end, &newHead, &newEnd);
+
+    if(newHead != pivot) {
+        ListaContato *tmp = newHead;
+
+        while(tmp->proximo != pivot) {
+            tmp = tmp->proximo;
+        }
+
+        tmp->proximo = NULL;
+
+        newHead = quickSortRecur(newHead, tmp);
+
+        tmp = getTail(newHead);
+        tmp->proximo =  pivot;
+    }
+
+    pivot->proximo = quickSortRecur(pivot->proximo, newEnd);
+
+    return newHead;
+}
+
+void quickSort(ListaContato **headRef) {
+    (*headRef) = quickSortRecur(*headRef, getTail(*headRef));
+
+    return;
 }
